@@ -84,12 +84,28 @@ void terminal_putentryat(char c, uint8_t color, size_t x, size_t y) {
   terminal_buffer[index] = make_vgaentry(c, color);
 }
 
+void terminal_scroll() {
+  // iterate and re-adjust buffer to scroll vertically
+  for (size_t y = 0; y < VGA_HEIGHT-1; y++) {
+    for (size_t x = 0; x < VGA_WIDTH; x++) {
+      size_t index0 = VGA_WIDTH * y + x;
+      size_t index1 = VGA_WIDTH * (y+1) + x;
+      terminal_buffer[index0] = terminal_buffer[index1];
+    }
+  }
+}
+
 void terminal_putchar(char c) {
   // if input character is the newline character, increase
   // row index and set column index to zero
   if (c == '\n') {
     terminal_row++;
     terminal_column = 0;
+    // call scroll function if terminal height is reached
+    if (terminal_row == VGA_HEIGHT) {
+      terminal_scroll();
+      terminal_row = VGA_HEIGHT-1;
+    }
   }
   else {
     terminal_putentryat(c, terminal_color, terminal_column, terminal_row);
@@ -119,7 +135,13 @@ void kernel_main() {
    * yet, '\n' will produce some VGA specific character instead.
    * This is normal.
    */
+  // write the hello world sequence to stdout
+  terminal_setcolor(COLOR_RED);
   terminal_writestring("Hello, kernel World!\n");
-  terminal_writestring("Hello, kernel World!\n");
-  terminal_writestring("Hello, kernel World!\n");
+  terminal_setcolor(COLOR_WHITE);
+  for (int i=0; i<6; i++) terminal_writestring("Hello, kernel World!\n");
+  terminal_setcolor(COLOR_BLUE);
+  for (int i=0; i<18; i++) terminal_writestring("Hello, kernel World!\n");
+  terminal_setcolor(COLOR_GREEN);
+  for (int i=0; i<5; i++) terminal_writestring("Hello, kernel World!\n");
 }
